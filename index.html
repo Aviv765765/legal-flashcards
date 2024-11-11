@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Avishalom Shachaf">
+    <meta name="copyright" content="© 2024 Avishalom Shachaf. All rights reserved.">
+    <title>מערכת ראשי תיבות משפטיים - אבישלום שחף</title>
+    
+    <!-- Load React -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body { 
+            direction: rtl;
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+        .flashcard {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 20px 0;
+            background: #ffffff;
+        }
+        .button {
+            background-color: #4a90e2;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            margin: 0 4px;
+        }
+        .button:hover {
+            background-color: #357abd;
+        }
+        .button.secondary {
+            background-color: #6c757d;
+        }
+        .button.danger {
+            background-color: #dc3545;
+        }
+        .input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 4px;
+            width: 100%;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .copyright {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.875rem;
+            border-top: 1px solid #eee;
+            margin-top: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const initialCards = [
+            {
+                id: 1,
+                abbreviation: "תשפ״ה",
+                full: "תשפ״ה - שנת הלימודים 2024-2025",
+                note: "תשפ\"ה = ה'תשפ\"ה = השנה העברית הנוכחית"
+            },
+            {
+                id: 2,
+                abbreviation: "עו״ד",
+                full: "עורך דין",
+                note: "תואר מקצועי המציין הסמכה מלשכת עורכי הדין"
+            }
+        ];
+
+        function FlashcardApp() {
+            const [cards, setCards] = React.useState(() => {
+                const saved = localStorage.getItem('flashcards');
+                return saved ? JSON.parse(saved) : initialCards;
+            });
+            const [currentIndex, setCurrentIndex] = React.useState(0);
+            const [isFlipped, setIsFlipped] = React.useState(false);
+            const [showAddModal, setShowAddModal] = React.useState(false);
+            const [newCard, setNewCard] = React.useState({ abbreviation: '', full: '', note: '' });
+            
+            React.useEffect(() => {
+                localStorage.setItem('flashcards', JSON.stringify(cards));
+            }, [cards]);
+
+            const handleNext = () => {
+                setIsFlipped(false);
+                setCurrentIndex((prev) => (prev + 1) % cards.length);
+            };
+
+            const handlePrevious = () => {
+                setIsFlipped(false);
+                setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
+            };
+
+            const handleAddCard = () => {
+                if (newCard.abbreviation && newCard.full) {
+                    setCards([...cards, { ...newCard, id: Date.now() }]);
+                    setNewCard({ abbreviation: '', full: '', note: '' });
+                    setShowAddModal(false);
+                }
+            };
+
+            const handleDeleteCard = () => {
+                if (confirm('האם אתה בטוח שברצונך למחוק כרטיסיה זו?')) {
+                    const newCards = cards.filter((_, index) => index !== currentIndex);
+                    setCards(newCards);
+                    if (newCards.length > 0) {
+                        setCurrentIndex(Math.min(currentIndex, newCards.length - 1));
+                    } else {
+                        setCurrentIndex(0);
+                    }
+                }
+            };
+
+            return React.createElement('div', { className: 'container mx-auto' },
+                React.createElement('div', { className: 'header' },
+                    React.createElement('h1', { className: 'text-3xl font-bold' }, 
+                        'מערכת ראשי תיבות משפטיים'
+                    ),
+                    React.createElement('div', { className: 'text-lg text-gray-600 mt-2' },
+                        'פותח על ידי אבישלום שחף'
+                    )
+                ),
+                React.createElement('div', { className: 'card' },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                        React.createElement('button', { 
+                            className: 'button',
+                            onClick: () => setShowAddModal(true)
+                        }, 'הוסף ראשי תיבות חדשים'),
+                        React.createElement('div', { className: 'text-sm text-gray-500' },
+                            `כרטיסיה ${currentIndex + 1} מתוך ${cards.length}`
+                        )
+                    ),
+
+                    cards.length > 0 ? React.createElement('div', null,
+                        React.createElement('div', { 
+                            className: 'flashcard',
+                            onClick: () => setIsFlipped(!isFlipped)
+                        },
+                            React.createElement('div', { className: 'text-2xl font-bold text-center p-4' },
+                                isFlipped ? cards[currentIndex].full : cards[currentIndex].abbreviation
+                            )
+                        ),
+                        React.createElement('div', { className: 'mt-4 text-sm text-gray-600 p-4 bg-gray-50 rounded' },
+                            React.createElement('strong', null, 'הערה: '),
+                            cards[currentIndex].note || 'אין הערות'
+                        ),
+                        React.createElement('div', { className: 'flex justify-between mt-4' },
+                            React.createElement('button', { 
+                                className: 'button',
+                                onClick: handlePrevious 
+                            }, 'הקודם'),
+                            React.createElement('button', {
+                                className: 'button danger',
+                                onClick: handleDeleteCard
+                            }, 'מחק כרטיסיה'),
+                            React.createElement('button', { 
+                                className: 'button',
+                                onClick: handleNext 
+                            }, 'הבא')
+                        )
+                    ) : React.createElement('div', { className: 'text-center py-8 text-gray-500' },
+                        'אין כרטיסיות. הוסף כרטיסיות חדשות.'
+                    )
+                ),
+                
+                React.createElement('div', { className: 'copyright' },
+                    '© 2024 כל הזכויות שמורות לאבישלום שחף'
+                ),
+
+                showAddModal && React.createElement('div', { className: 'modal' },
+                    React.createElement('div', { className: 'modal-content' },
+                        React.createElement('h2', { className: 'text-xl font-bold mb-4' }, 'הוסף ראשי תיבות חדשים'),
+                        React.createElement('input', {
+                            className: 'input',
+                            placeholder: 'ראשי תיבות (למשל: עו"ד)',
+                            value: newCard.abbreviation,
+                            onChange: (e) => setNewCard({...newCard, abbreviation: e.target.value})
+                        }),
+                        React.createElement('input', {
+                            className: 'input',
+                            placeholder: 'פירוש מלא (למשל: עורך דין)',
+                            value: newCard.full,
+                            onChange: (e) => setNewCard({...newCard, full: e.target.value})
+                        }),
+                        React.createElement('textarea', {
+                            className: 'input',
+                            placeholder: 'הערות (אופציונלי)',
+                            value: newCard.note,
+                            onChange: (e) => setNewCard({...newCard, note: e.target.value})
+                        }),
+                        React.createElement('div', { className: 'flex justify-end mt-4' },
+                            React.createElement('button', {
+                                className: 'button secondary',
+                                onClick: () => setShowAddModal(false)
+                            }, 'ביטול'),
+                            React.createElement('button', {
+                                className: 'button',
+                                onClick: handleAddCard
+                            }, 'הוסף')
+                        )
+                    )
+                )
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(
+            React.createElement(FlashcardApp),
+            document.getElementById('root')
+        );
+    </script>
+</body>
+</html>
