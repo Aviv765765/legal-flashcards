@@ -1,3 +1,6 @@
+אשלח את הקוד בלי התגיות המיותרות שהיו בו קודם:
+
+```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -28,11 +31,11 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 20px;
             margin: 20px auto;
-            max-width: 1000px; /* הגדלת הרוחב המקסימלי */
-            width: 95%; /* תמיכה במסכים קטנים */
+            max-width: 1000px;
+            width: 95%;
         }
         .flashcard {
-            min-height: 300px; /* הגדלת הגובה המינימלי */
+            min-height: 300px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -353,4 +356,20 @@
                             className: 'input',
                             placeholder: 'הערות (אופציונלי)',
                             value: editingCard?.note || '',
-                            onChange: (e) => setEditingCard({...
+                            onChange: (e) => setEditingCard({...editingCard, note: e.target.value})
+                        }),
+                        React.createElement('div', { className: 'flex justify-end mt-4 gap-2' },
+                            React.createElement('button', {
+                                className: 'button secondary',
+                                onClick: () => {
+                                    setShowEditModal(false);
+                                    setEditingCard(null);
+                                }
+                            }, 'ביטול'),
+                            React.createElement('button', {
+                                className: 'button',
+                                onClick: handleEditCard
+                            }, 'שמור שינויים')
+                        )
+                    )
+                )
