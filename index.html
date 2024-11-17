@@ -28,10 +28,11 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 20px;
             margin: 20px auto;
-            max-width: 800px;
+            max-width: 1000px; /* הגדלת הרוחב המקסימלי */
+            width: 95%; /* תמיכה במסכים קטנים */
         }
         .flashcard {
-            min-height: 200px;
+            min-height: 300px; /* הגדלת הגובה המינימלי */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -41,6 +42,17 @@
             border-radius: 8px;
             margin: 20px 0;
             background: #ffffff;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .flashcard {
+                min-height: 200px;
+                padding: 15px;
+            }
+            .card {
+                padding: 15px;
+            }
         }
         .button {
             background-color: #4a90e2;
@@ -50,6 +62,14 @@
             border: none;
             cursor: pointer;
             margin: 0 4px;
+            font-size: 1rem;
+        }
+        @media (max-width: 480px) {
+            .button {
+                padding: 6px 12px;
+                font-size: 0.875rem;
+                margin: 2px;
+            }
         }
         .button:hover {
             background-color: #357abd;
@@ -61,11 +81,23 @@
             background-color: #dc3545;
         }
         .input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 8px 0;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .course-title-input {
+            text-align: center;
+            font-size: 1.25rem;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            margin: 4px;
+            margin: 10px auto;
+            max-width: 600px;
             width: 100%;
+            display: block;
         }
         .modal {
             position: fixed;
@@ -77,13 +109,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1000;
         }
         .modal-content {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .copyright {
             text-align: center;
@@ -102,7 +137,14 @@
         .controls {
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 20px;
+        }
+        @media (max-width: 480px) {
+            .controls {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -133,11 +175,20 @@
             const [currentIndex, setCurrentIndex] = React.useState(0);
             const [isFlipped, setIsFlipped] = React.useState(false);
             const [showAddModal, setShowAddModal] = React.useState(false);
+            const [showEditModal, setShowEditModal] = React.useState(false);
             const [newCard, setNewCard] = React.useState({ abbreviation: '', full: '', note: '' });
+            const [editingCard, setEditingCard] = React.useState(null);
+            const [courseTitle, setCourseTitle] = React.useState(() => {
+                return localStorage.getItem('courseTitle') || '';
+            });
             
             React.useEffect(() => {
                 localStorage.setItem('flashcards', JSON.stringify(cards));
             }, [cards]);
+
+            React.useEffect(() => {
+                localStorage.setItem('courseTitle', courseTitle);
+            }, [courseTitle]);
 
             const handleNext = () => {
                 setIsFlipped(false);
@@ -154,6 +205,17 @@
                     setCards([...cards, { ...newCard, id: Date.now() }]);
                     setNewCard({ abbreviation: '', full: '', note: '' });
                     setShowAddModal(false);
+                }
+            };
+
+            const handleEditCard = () => {
+                if (editingCard.abbreviation && editingCard.full) {
+                    const newCards = cards.map((card, index) => 
+                        index === currentIndex ? editingCard : card
+                    );
+                    setCards(newCards);
+                    setShowEditModal(false);
+                    setEditingCard(null);
                 }
             };
 
@@ -176,10 +238,16 @@
                     ),
                     React.createElement('div', { className: 'text-lg text-gray-600 mt-2' },
                         'פותח על ידי אבישלום שחף'
-                    )
+                    ),
+                    React.createElement('input', {
+                        className: 'course-title-input mt-4',
+                        placeholder: 'שם הקורס',
+                        value: courseTitle,
+                        onChange: (e) => setCourseTitle(e.target.value)
+                    })
                 ),
                 React.createElement('div', { className: 'card' },
-                    React.createElement('div', { className: 'flex justify-between items-center mb-4' },
+                    React.createElement('div', { className: 'flex justify-between items-center mb-4 flex-wrap gap-2' },
                         React.createElement('button', { 
                             className: 'button',
                             onClick: () => setShowAddModal(true)
@@ -194,7 +262,7 @@
                             className: 'flashcard',
                             onClick: () => setIsFlipped(!isFlipped)
                         },
-                            React.createElement('div', { className: 'text-2xl font-bold text-center p-4' },
+                            React.createElement('div', { className: 'text-2xl font-bold text-center p-4 w-full' },
                                 isFlipped ? cards[currentIndex].full : cards[currentIndex].abbreviation
                             )
                         ),
@@ -202,11 +270,18 @@
                             React.createElement('strong', null, 'הערה: '),
                             cards[currentIndex].note || 'אין הערות'
                         ),
-                        React.createElement('div', { className: 'flex justify-between mt-4' },
+                        React.createElement('div', { className: 'flex justify-between mt-4 flex-wrap gap-2' },
                             React.createElement('button', { 
                                 className: 'button',
                                 onClick: handlePrevious 
                             }, 'הקודם'),
+                            React.createElement('button', {
+                                className: 'button secondary',
+                                onClick: () => {
+                                    setEditingCard({...cards[currentIndex]});
+                                    setShowEditModal(true);
+                                }
+                            }, 'ערוך כרטיסיה'),
                             React.createElement('button', {
                                 className: 'button danger',
                                 onClick: handleDeleteCard
@@ -246,7 +321,7 @@
                             value: newCard.note,
                             onChange: (e) => setNewCard({...newCard, note: e.target.value})
                         }),
-                        React.createElement('div', { className: 'flex justify-end mt-4' },
+                        React.createElement('div', { className: 'flex justify-end mt-4 gap-2' },
                             React.createElement('button', {
                                 className: 'button secondary',
                                 onClick: () => setShowAddModal(false)
@@ -257,15 +332,25 @@
                             }, 'הוסף')
                         )
                     )
-                )
-            );
-        }
+                ),
 
-        // Render the app
-        ReactDOM.render(
-            React.createElement(FlashcardApp),
-            document.getElementById('root')
-        );
-    </script>
-</body>
-</html>
+                showEditModal && React.createElement('div', { className: 'modal' },
+                    React.createElement('div', { className: 'modal-content' },
+                        React.createElement('h2', { className: 'text-xl font-bold mb-4' }, 'ערוך כרטיסיה'),
+                        React.createElement('input', {
+                            className: 'input',
+                            placeholder: 'ראשי תיבות (למשל: עו"ד)',
+                            value: editingCard?.abbreviation || '',
+                            onChange: (e) => setEditingCard({...editingCard, abbreviation: e.target.value})
+                        }),
+                        React.createElement('input', {
+                            className: 'input',
+                            placeholder: 'פירוש מלא (למשל: עורך דין)',
+                            value: editingCard?.full || '',
+                            onChange: (e) => setEditingCard({...editingCard, full: e.target.value})
+                        }),
+                        React.createElement('textarea', {
+                            className: 'input',
+                            placeholder: 'הערות (אופציונלי)',
+                            value: editingCard?.note || '',
+                            onChange: (e) => setEditingCard({...
